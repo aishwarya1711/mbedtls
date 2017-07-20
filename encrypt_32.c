@@ -33,12 +33,6 @@
 #define MODE_ENCRYPT    0
 #define MODE_DECRYPT    1
 
-#define USAGE   \
-    "\n  aescrypt2 <mode> <input filename> <output filename> <key>\n" \
-    "\n   <mode>: 0 = encrypt, 1 = decrypt\n" \
-    "\n  example: aescrypt2 0 file file.aes hex:E76B2413958B00E193\n" \
-    "\n"
-
 #if !defined(MBEDTLS_AES_C) || !defined(MBEDTLS_SHA256_C) || \
     !defined(MBEDTLS_FS_IO) || !defined(MBEDTLS_MD_C) ||\
 	!defined(MBEDTLS_ECDH_C) || \
