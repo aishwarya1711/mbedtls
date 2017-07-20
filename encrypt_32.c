@@ -281,11 +281,9 @@ int main(int argc, char *argv[]) {
 		goto exit;
 	}
 
-	//mode = atoi( argv[1] );
-	mode = 1;
+
 	memset(IV, 0, sizeof(IV));
 	memset(key, 0, sizeof(key));
-	//memset(key1,0,sizeof(key1));
 	memset(digest, 0, sizeof(digest));
 	memset(buffer, 0, sizeof(buffer));
 
@@ -310,50 +308,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	/*
-	 * Read the secret key and clean the command line.
+	 * Read the secret key for AES encryption 
 	 */
 
 	memcpy(&z, &ctx_cli.z, sizeof(ctx_cli.z));
 	memcpy(key, z.p, sizeof(*(z.p)));
 	keylen = strlen(key);
-	/*
-	 strcpy(argv[4],"3956421040424689310");
+	
 
-	 if( ( fkey = fopen( argv[4], "rb" ) ) != NULL )
-	 {
-	 keylen = fread( key, 1, sizeof( key ), fkey );
-	 fclose( fkey );
-	 }
-	 else
-	 {
-	 if( memcmp( argv[4], "hex:", 4 ) == 0 )
-	 {
-	 p = &argv[4][4];
-	 keylen = 0;
-
-	 while( ( sscanf( p, "%02X", &n ) > 0 )&&
-	 ( keylen < (int) sizeof( key ) ))
-	 {
-	 key[keylen++] = (unsigned char) n;
-	 p += 2;
-	 }
-	 }
-	 else
-	 {
-	 keylen = strlen( argv[4] );
-
-	 if( keylen > (int) sizeof( key ) )
-	 keylen = (int) sizeof( key );
-
-	 memcpy( key, argv[4], keylen );
-	 }
-	 }
-
-	 //memset( argv[4], 0, strlen( argv[4] ) );         */
-
-	char test[] = "This is Hello world Test File.";
-	char test_out[1024] = "";
-	char test1[1024] = "";
+	char test[] = "This is Test File.";
+	char test_out[1024] = "";		//encrypted message
+	char test1[1024] = "";			// decrypted output
 	char * q;
 	q = test;
 	long testsize = sizeof(test);
@@ -395,8 +360,8 @@ int main(int argc, char *argv[]) {
 		goto exit;
 	}
 
-	// if( mode == MODE_ENCRYPT )
-
+	
+	// MODE_ENCRYPT 
 	/*
 	 * Generate the initialization vector as:
 	 * IV = SHA-256( filesize || filename )[0..15]
@@ -423,7 +388,6 @@ int main(int argc, char *argv[]) {
 	 * Append the IV at the beginning of the output.
 	 */
 	memcpy(test_out, IV, 16);
-	// if( fwrite( IV, 1, 16, fout ) != 16 )
 	if (strlen(test_out) != 16) {
 		mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 16);
 		goto exit;
@@ -442,8 +406,7 @@ int main(int argc, char *argv[]) {
 		mbedtls_md_update(&sha_ctx, key, keylen);
 		mbedtls_md_finish(&sha_ctx, digest);
 	}
-
-	// memset( key, 0, sizeof( key ) );
+	
 	mbedtls_aes_setkey_enc(&aes_ctx, digest, 128);
 	mbedtls_md_hmac_starts(&sha_ctx, digest, 32);
 
@@ -455,14 +418,6 @@ int main(int argc, char *argv[]) {
 
 		memcpy(buffer, &test[offset], n);
 
-		//if( fread( buffer, 1, n, fin ) != (size_t) n )
-		/*if (strlen((const char*)buffer)!= n)
-		 {
-		 mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", n );
-		 goto exit;
-		 }
-		 */
-
 		for (i = 0; i < 16; i++)
 			buffer[i] = (unsigned char) (buffer[i] ^ IV[i]);
 
@@ -470,13 +425,6 @@ int main(int argc, char *argv[]) {
 		mbedtls_md_hmac_update(&sha_ctx, buffer, 16);
 
 		memcpy(&test_out[offset + 16], buffer, 16);
-		//if( fwrite( buffer, 1, 16, fout ) != 16 )
-		/* if(strlen(test_out)!= 16)
-		 {
-		 mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 16 );
-		 goto exit;
-		 }
-		 */
 
 		memcpy(IV, buffer, 16);
 	}
@@ -487,15 +435,9 @@ int main(int argc, char *argv[]) {
 	mbedtls_md_hmac_finish(&sha_ctx, digest);
 	memcpy(&test_out[offset + 16], digest, 32);
 
-	//if( fwrite( digest, 1, 32, fout ) != 32 )
-	/* if(strlen(test_out)!= 32)
-	 {
-	 mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", 32 );
-	 goto exit;
-	 }
-	 */
 
-	//if( mode == MODE_DECRYPT )
+
+	// MODE_DECRYPT 
 	unsigned char tmp[16];
 	long test_out_size = offset + 48;
 
@@ -521,13 +463,13 @@ int main(int argc, char *argv[]) {
 	/*
 	 * Subtract the IV + HMAC length.(essentially  equal to 'offset'variable used during encryption)
 	 */
-	//test_out_size -= ( 16 + 32 );cant define this way as test_out size has no relation with output string
+	
 
 	/*
 	 * Read the IV and original testsize modulo 16.
 	 */
 	memcpy(buffer, test_out, 16);
-	//if( fread( buffer, 1, 16, fin ) != 16 )
+	
 	if (strlen((const char*) buffer) != 16) {
 		mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 16);
 		goto exit;
@@ -550,7 +492,7 @@ int main(int argc, char *argv[]) {
 		mbedtls_md_finish(&sha_ctx, digest_dec);
 	}
 
-	//memset( key, 0, sizeof( key ) );
+	
 	mbedtls_aes_setkey_dec(&aes_ctx, digest_dec, 128);
 	mbedtls_md_hmac_starts(&sha_ctx, digest_dec, 32);
 
@@ -560,13 +502,6 @@ int main(int argc, char *argv[]) {
 	for (offset1 = 0; offset1 < offset; offset1 += 16) {
 
 		memcpy(buffer, &test_out[offset1 + 16], 16);
-		//if( fread( buffer, 1, 16, fin ) != 16 )
-		/*if(strlen((const char*)buffer) != 16)
-		 {
-		 mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 16 );
-		 goto exit;
-		 }
-		 */
 
 		memcpy(tmp, buffer, 16);
 
@@ -581,15 +516,6 @@ int main(int argc, char *argv[]) {
 		n = (lastn > 0 && offset1 == test_out_size - 16) ? lastn : 16;
 
 		memcpy(&test1[offset1], buffer, n);
-
-		//if( fwrite( buffer, 1, n, fout ) != (size_t) n )
-		/*
-		 if(strlen(test1)!= n)
-		 {
-		 mbedtls_fprintf( stderr, "fwrite(%d bytes) failed\n", n );
-		 goto exit;
-		 }
-		 */
 	}
 
 	/*
@@ -597,12 +523,6 @@ int main(int argc, char *argv[]) {
 	 */
 	mbedtls_md_hmac_finish(&sha_ctx, digest_dec);
 	memcpy(buffer, &test_out[offset1 + 16], 32);
-	/*if( fread( buffer, 1, 32, fin ) != 32 )
-	 {
-	 mbedtls_fprintf( stderr, "fread(%d bytes) failed\n", 32 );
-	 goto exit;
-	 }
-	 */
 
 	/* Use constant-time buffer comparison */
 	diff = 0;
